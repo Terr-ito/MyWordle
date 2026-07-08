@@ -1,0 +1,1 @@
+# Basic 5 letter Wordle
