@@ -4,6 +4,9 @@
 #include <string>
 #include <chrono>
 
+// Missing duplicate letter edge cases
+
+
 // Struct for a wordle type word
 // type = 0 = grey ----- letter has not been checked
 // type = 1 = black ---- letter does not appear
@@ -30,6 +33,29 @@ void showKeyboard(unsigned letters[]) {
     std::cout << "\n";
 }
 
+// To be valid, check if it's 5 letters 
+// and then search for it in the database
+void isValid(std::string &validWord, std::vector<std::string> database) {
+    int valid = 0;
+
+    while(valid == 0) {
+        getline(std::cin, validWord);
+        if(validWord.length() == 5) {
+            for(unsigned i = 0; i <= database.size() - 1; i++) {
+                if(validWord.compare(database[i]) == 0) {
+                    valid = 1;
+                    break;
+                }
+                else if(validWord.compare(database[i]) <= 0) {
+                    std::cout << "Invalid guess (word is not in the database). Try again\n";
+                    break;
+                }
+            }
+        }
+        else std::cout << "Invalid guess (not 5 letter word). Try again\n";
+    }
+}
+
 int main(int argc, char** argv) {
     // Open wordle words text file
     std::ifstream wordDB("valid-wordle-words.txt");
@@ -47,30 +73,28 @@ int main(int argc, char** argv) {
     wordle guess[6];
     std::string word, text_line;
     std::vector<std::string> database;
-    while(std::getline(wordDB, text_line))
-    {
+    while(std::getline(wordDB, text_line)) {
         database.push_back(text_line);
     }
     std::uniform_int_distribution<> distr(0, database.size() - 1);
 
     // Store random word and check if it's valid
-    word = database[distr(gen)];
+    int random = distr(gen);
+    word = database[random];
     if(word.length() != 5) {
-        std::cerr << "Word pulled from database in not a valid word. (not 5 letter word)";
+        std::cerr << "Word pulled from database in not a valid word. (not 5 letter word)\n" <<
+                    "Corrupt database. (line: " << random << ")\n";
         return 1;
     }
 
+    // Pulled word
     std::cout << word << "\n";
-    // Start guessing loop (i = guess count)
+
+    // Start guessing loop (i = guess count) - 6 guesses
     unsigned i = 0;
     while(i < 6) {
         // Get guessed word from stdin and check if it's valid
-        int valid = 0;
-        while(valid == 0) {
-            getline(std::cin, guess[i].word);
-            if(guess[i].word.length() == 5) valid = 1;
-            else std::cout << "Invalid guess (not 5 letter word). Try again\n";
-        }
+        isValid(guess[i].word, database);
 
         // Check each letter of the word (l = letter)
         for(int l = 0; l < 5; l++) {
@@ -89,7 +113,7 @@ int main(int argc, char** argv) {
             std::cout << guess[i].word[l] << " - " << guess[i].type[l] << "\n";
         }
 
-        // Add letter type to wordle keyboard
+        // Update letter type to wordle keyboard
         letters[guess[i].word[0] - 'a'] = guess[i].type[0];
         letters[guess[i].word[1] - 'a'] = guess[i].type[1];
         letters[guess[i].word[2] - 'a'] = guess[i].type[2];
