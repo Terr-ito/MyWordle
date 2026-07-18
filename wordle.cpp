@@ -1,8 +1,11 @@
+#include "raylib.h"
 #include <iostream>
 #include <fstream>
 #include <random>
 #include <string>
 #include <chrono>
+
+// g++ wordle.cpp -o wordle.exe -I"C:\raylib\raylib\src" -L"C:\raylib\raylib\src" -lraylib -lopengl32 -lgdi32 -lwinmm
 
 // Struct for a wordle type word
 // type = 0 = grey ----- letter has not been checked
@@ -11,7 +14,7 @@
 // type = 3 = green ---- letter appears in that location
 typedef struct {
     std::string word;
-    unsigned type[5];
+    unsigned type[5] = {0};
 }wordle;
 
 // Counts the number of occurences of a char in a string
@@ -66,7 +69,7 @@ void isValid(std::string &validWord, std::vector<std::string> database) {
 
 // 1st "for" is a surface level check
 // 2nd "for" is for duplicate letter edge cases
-void checkGuess(std::string word, wordle &guess) {
+void checkGuess(std::string word, wordle &guess, unsigned cnt) {
     // 1st
     for(int l = 0; l < 5; l++) {
         // Letter is green
@@ -89,12 +92,21 @@ void checkGuess(std::string word, wordle &guess) {
         }
     }
 
+    BeginDrawing();
+
     // Display guess results
     for(int l = 0; l < 5; l++) {
+        Color squareColor = GRAY;
+        if (guess.type[l] == 2) squareColor = GOLD;
+        if (guess.type[l] == 3) squareColor = GREEN;
+
+        DrawRectangle((200 + (l * 50)), (200 + (cnt * 50)), 30, 30, squareColor);
+
         guess.word[l] = tolower(guess.word[l]);
         std::cout << guess.word[l] << " - " << guess.type[l] << "\n";
     }
 
+    EndDrawing();
 }
 
 int main(int argc, char** argv) {
@@ -134,12 +146,19 @@ int main(int argc, char** argv) {
     
     // Start guessing loop (i = guess count) - 6 guesses
     unsigned i = 0;
+
+    // Initialize raylib window
+    InitWindow(500, 700, "Wordle");
+    while(!IsWindowReady()) { continue;}
+    ClearBackground(RAYWHITE);
+
+
     while(i < 6) {
         // Get guessed word from stdin and check if it's valid
         isValid(guess[i].word, database);
 
         // Check each letter of the word (l = letter)
-        checkGuess(word, guess[i]);
+        checkGuess(word, guess[i], i);
 
         // Update letter type to wordle keyboard
         letters[guess[i].word[0] - 'a'] = guess[i].type[0];
@@ -151,7 +170,7 @@ int main(int argc, char** argv) {
 
         // All characters green = we found the word
         if(guess[i].type[0] == 3 && guess[i].type[1] == 3 && guess[i].type[2] == 3 && guess[i].type[3] == 3 && guess[i].type[4] == 3) {
-            std::cout << "Congrats!";
+            std::cout << "Congrats!" << "\n";
             return 0;
         }
 
@@ -162,5 +181,13 @@ int main(int argc, char** argv) {
     // Failed to guess word
     std::cout << "The word was \"" << word << "\"." << "\n";
     std::cout << "Better luck next time.";
+
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        // Just idling and maintaining the window
+        EndDrawing();
+    }
+    
+    CloseWindow();
     return 0;
 }
